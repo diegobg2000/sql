@@ -5,8 +5,10 @@ import java.awt.event.KeyListener;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.Properties;
 
 import javax.swing.BorderFactory;
@@ -15,6 +17,8 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
+
+
 
 public class Main extends JFrame implements KeyListener{
 
@@ -78,9 +82,34 @@ public class Main extends JFrame implements KeyListener{
 				Statement sentencia = conexion.createStatement();
 				if (sentencia.execute(linea.getText())) {
 					ResultSet datos = sentencia.getResultSet();
-					resultado.append("Número de columnas: " + datos.getMetaData().getColumnCount());
+					ResultSetMetaData meta = datos.getMetaData();
+					int columns = meta.getColumnCount();
+					String linea = "";
+					for (int i=1; i<columns; i++) {
+						String campo = "| " + meta.getColumnLabel(i) + " ";
+						if (i == columns)
+							linea += "|" + System.lineSeparator();
+						linea += campo;
+					}
+					resultado.append(linea);
 					while (datos.next()) {
-						
+						linea = "";
+						for (int i=1; i<columns; i++) {
+							String campo = "| ";
+							switch (meta.getColumnType(i)) {
+							case Types.INTEGER:
+								campo += datos.getInt(i);
+								break;
+							case Types.VARCHAR:
+								campo += datos.getString(i);
+								break;
+							}
+							campo += " ";
+							if (i == columns)
+								linea += "|" + System.lineSeparator();
+							linea += campo;
+						}
+						resultado.append(linea);
 					}
 				}
 			} catch (SQLException e1) {

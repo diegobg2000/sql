@@ -13,6 +13,7 @@ import java.util.Properties;
 
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
+import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
@@ -35,12 +36,11 @@ public class Main extends JFrame implements KeyListener{
 						BorderFactory.createEtchedBorder(),
 						BorderFactory.createEmptyBorder(10, 10, 10, 10)));
 		getContentPane().setLayout(new BorderLayout());
-		resultado = new JTextArea();
+		getContentPane().add(new JScrollPane(resultado = new JTextArea()), BorderLayout.CENTER);
 		resultado.setFocusable(false);
 		resultado.setEditable(false);
 		resultado.setBorder(borde);
-		getContentPane().add(resultado, BorderLayout.CENTER);
-		linea = new JTextField();
+		linea = new JTextField("select * from mysql.user");
 		linea.setBorder(borde);
 		linea.addKeyListener(this);
 		getContentPane().add(linea, BorderLayout.SOUTH);
@@ -52,7 +52,7 @@ public class Main extends JFrame implements KeyListener{
 		propiedades.put("user", "root");
 		propiedades.put("password", "practicas");
 		try {
-			conexion = DriverManager.getConnection("jdbc:mysql://192.168.10.67:3306/?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC", propiedades);
+			conexion = DriverManager.getConnection("jdbc:mysql://192.168.43.74:3306/?useUnicode=true&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=UTC", propiedades);
 		} catch (SQLException e) {
 			e.printStackTrace();
 			System.exit(-1);
@@ -85,31 +85,26 @@ public class Main extends JFrame implements KeyListener{
 					ResultSetMetaData meta = datos.getMetaData();
 					int columns = meta.getColumnCount();
 					String linea = "";
-					for (int i=1; i<columns; i++) {
-						String campo = "| " + meta.getColumnLabel(i) + " ";
-						if (i == columns)
-							linea += "|" + System.lineSeparator();
-						linea += campo;
-					}
-					resultado.append(linea);
+					for (int i=1; i<columns; i++)
+						linea += "| " + meta.getColumnLabel(i) + " ";
+					resultado.append(linea + "|\n");
 					while (datos.next()) {
 						linea = "";
 						for (int i=1; i<columns; i++) {
-							String campo = "| ";
-							switch (meta.getColumnType(i)) {
+							linea += "| ";
+							int tipo = meta.getColumnType(i);
+							switch (tipo) {
 							case Types.INTEGER:
-								campo += datos.getInt(i);
+								linea += datos.getInt(i);
 								break;
+							case Types.CHAR:
 							case Types.VARCHAR:
-								campo += datos.getString(i);
+								linea += datos.getString(i);
 								break;
 							}
-							campo += " ";
-							if (i == columns)
-								linea += "|" + System.lineSeparator();
-							linea += campo;
+							linea += " ";
 						}
-						resultado.append(linea);
+						resultado.append(linea + "|\n");
 					}
 				}
 			} catch (SQLException e1) {
